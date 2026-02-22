@@ -1,0 +1,10 @@
+version: "3"
+
+services:
+  rust:
+    build: .
+    working_dir: /workdir
+    command: sleep infinity
+    volumes:
+      - ~/.gitconfig:/home/root/.gitconfig:ro
+      - ../:/workdir

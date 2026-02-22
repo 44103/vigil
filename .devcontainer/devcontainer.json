@@ -1,0 +1,19 @@
+{
+  "name": "Rust",
+  "dockerComposeFile": [
+    "docker-compose.yml"
+  ],
+  "service": "rust",
+  "remoteUser": "root",
+  "settings": {
+    "terminal.integrated.shell.linux": "zsh"
+  },
+  "workspaceFolder": "/workdir",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "rust-lang.rust-analyzer"
+      ]
+    }
+  }
+}
