@@ -3,9 +3,12 @@ use axum::{
     routing::get,
     Json,
     Router,
+    http::StatusCode,
+    response::IntoResponse,
 };
 use serde::{Deserialize, Serialize};
 use std::fs::File;
+mod monitor;
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
@@ -17,30 +20,37 @@ struct Activity {
 
 #[tokio::main]
 async fn main() {
-    // Define routing and application state
+    tokio::spawn(monitor::run());
+
     let app = Router::new()
         .route("/health", get(|| async { "OK" }))
-        // Endpoint to get activities from CSV
         .route("/activities/:date", get(get_activities));
 
-    // Bind to the address and port
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
+    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000")
+        .await
+        .expect("Failed to bind port 3000");
+    
     println!("listening on {}", listener.local_addr().unwrap());
-
-    // Start the server
     axum::serve(listener, app).await.unwrap();
 }
 
-// Handler to read CSV file and return as JSON using method chaining
-async fn get_activities(Path(date): Path<String>) -> Json<Vec<Activity>> {
-    let file_path = format!("data/{}.csv", date);
-    let file = File::open(file_path).expect("Failed to open file");
+async fn get_activities(Path(date): Path<String>) -> impl IntoResponse {
+    let file_path = format!("data/{date}.csv");
     
-    csv::Reader::from_reader(file)
-        .deserialize()
-        .collect::<Result<Vec<Activity>, _>>()
-        // Map the inner Vec<Activity> to Json<Vec<Activity>>
-        .map(Json)
-        // Extract the final Json value
-        .expect("Failed to parse CSV records")
+    let file = match File::open(file_path) {
+        Ok(f) => f,
+        Err(_) => return (StatusCode::NOT_FOUND, "File not found").into_response(),
+    };
+
+    let result = csv::Reader::from_reader(file)
+        .deserialize::<Activity>()
+        .collect::<Result<Vec<Activity>, _>>();
+
+    match result {
+        Ok(data) => Json(data).into_response(),
+        Err(e) => {
+            eprintln!("CSV parse error: {e}");
+            (StatusCode::INTERNAL_SERVER_ERROR, "Failed to parse CSV records").into_response()
+        }
+    }
 }
