@@ -1,0 +1,23 @@
+# config.toml
+#
+# This file manages the configuration of the vigil application.
+# By default, the following settings are applied:
+#
+# log_output_path:
+#   Specifies the output directory for log files.
+#   If this setting is not provided, the OS-standard application data directory (ProjectDirs::data_local_dir()) will be used.
+#   Example (Linux): ~/.local/share/vigil/data
+#   Example (macOS): ~/Library/Application Support/com.44103.vigil/data
+#   Example (Windows): C:\Users\<username>\AppData\Local\44103\vigil\data
+#
+# monitor_interval_secs:
+#   Specifies the active window monitoring interval in seconds.
+#   If this setting is not provided, the default value of 60 seconds will be used.
+#
+# server_port:
+#   Specifies the port number for the HTTP server.
+#   If this setting is not provided, the default value of 3000 will be used.
+
+#log_output_path = "/path/to/your/custom/log/directory"
+#monitor_interval_secs = 30
+#server_port = 3000

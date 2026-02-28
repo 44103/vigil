@@ -1,28 +1,38 @@
 use active_win_pos_rs::get_active_window;
 use sysinfo::{Pid, System};
-use std::fs::OpenOptions;
+use std::fs::{self, OpenOptions};
 use std::io::Write;
+use std::path::PathBuf;
 use chrono::Local;
+use crate::config::{load_config, resolve_data_dir};
 
 pub async fn run() {
     let mut system = System::new_all();
+    let config = load_config();
+    
+    let interval = config.monitor_interval_secs.unwrap_or(60);
+    let data_dir = resolve_data_dir(&config);
+
+    if let Err(e) = fs::create_dir_all(&data_dir) {
+        eprintln!("Error creating data directory {:?}: {e}", data_dir);
+    }
 
     loop {
         system.refresh_processes();
 
-        if let Err(e) = log_active_window(&system).await {
+        if let Err(e) = log_active_window(&system, &data_dir).await {
             eprintln!("Error logging active window: {e}");
         }
-        tokio::time::sleep(tokio::time::Duration::from_secs(60)).await;
+        tokio::time::sleep(tokio::time::Duration::from_secs(interval)).await;
     }
 }
 
-async fn log_active_window(system: &System) -> Result<(), Box<dyn std::error::Error>> {
+async fn log_active_window(system: &System, data_dir: &PathBuf) -> Result<(), Box<dyn std::error::Error>> {
     let now = Local::now();
     let date = now.format("%Y-%m-%d").to_string();
     let timestamp = now.format("%Y-%m-%d %H:%M:%S").to_string();
 
-    let file_path = format!("./data/{date}.csv");
+    let file_path = data_dir.join(format!("{date}.csv"));
 
     let mut file = OpenOptions::new()
         .create(true)

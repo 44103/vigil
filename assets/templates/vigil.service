@@ -1,0 +1,10 @@
+[Unit]
+Description=Vigil Activity Monitor
+After=network.target
+
+[Service]
+ExecStart={{VIGIL_PATH}}
+Restart=always
+
+[Install]
+WantedBy=default.target
