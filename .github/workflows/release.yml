@@ -1,12 +1,31 @@
-name: Release
+name: Release-Please
 
 on:
   push:
-    tags:
-      - 'v*'
+    branches:
+      - release
+
+permissions:
+  contents: write
+  pull-requests: write
 
 jobs:
-  build:
+  release-please:
+    runs-on: ubuntu-latest
+    outputs:
+      release_created: ${{ steps.release.outputs.release_created }}
+      tag_name: ${{ steps.release.outputs.tag_name }}
+    steps:
+      - uses: google-github-actions/release-please-action@v4
+        id: release
+        with:
+          release-type: rust
+          package-name: vigil
+          target-branch: release
+
+  build-and-release:
+    needs: release-please
+    if: ${{ needs.release-please.outputs.release_created }}
     name: Build - ${{ matrix.target }}
     runs-on: ${{ matrix.os }}
     strategy:
@@ -14,16 +33,16 @@ jobs:
         include:
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
-            artifact_name: vigil-linux-x86_64
+            artifact_prefix: linux-x86_64
           - os: macos-latest
             target: x86_64-apple-darwin
-            artifact_name: vigil-macos-x64
+            artifact_prefix: macos-x64
           - os: macos-latest
             target: aarch64-apple-darwin
-            artifact_name: vigil-macos-arm64
+            artifact_prefix: macos-arm64
           - os: windows-latest
             target: x86_64-pc-windows-msvc
-            artifact_name: vigil-windows-x64.exe
+            artifact_prefix: windows-x64
 
     steps:
       - uses: actions/checkout@v4
@@ -38,35 +57,29 @@ jobs:
 
       - name: Prepare Artifacts
         shell: bash
-        run: |
-          cd target/${{ matrix.target }}/release
-          if [ "${{ matrix.os }}" = "windows-latest" ]; then
-            mv vigil.exe ${{ matrix.artifact_name }}
-            mv vigil-logger.exe vigil-logger-windows-x64.exe
-          else
-            mv vigil ${{ matrix.artifact_name }}
-            mv vigil-logger vigil-logger-${{ matrix.target }}
-          fi
+        run: ./.github/workflows/scripts/prepare-artifacts.sh ${{ matrix.target }} ${{ matrix.os }} ${{ matrix.artifact_prefix }}
 
-      - name: Upload Artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ matrix.artifact_name }}
-          path: |
-            target/${{ matrix.target }}/release/${{ matrix.artifact_name }}
-            target/${{ matrix.target }}/release/vigil-logger*
-
-  create-release:
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/download-artifact@v4
-        with:
-          path: artifacts
-
-      - name: Create Release
+      - name: Upload to Release
         uses: softprops/action-gh-release@v1
         with:
-          files: artifacts/**/*
+          tag_name: ${{ needs.release-please.outputs.tag_name }}
+          files: dist/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  sync-back-to-main:
+    needs: release-please
+    if: ${{ needs.release-please.outputs.release_created }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Sync release back to main
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git switch main
+          git merge origin/release --no-ff -m "chore: sync release back to main [skip ci]"
+          git push origin main
