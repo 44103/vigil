@@ -21,6 +21,14 @@ toml = "0.8"
 include_dir = "0.7.4"
 
 [[bin]]
+name = "vigild"
+path = "src/bin/vigild.rs"
+
+[[bin]]
+name = "vigil"
+path = "src/bin/vigil.rs"
+
+[[bin]]
 name = "vigil-logger"
 path = "src/bin/logger.rs"
 

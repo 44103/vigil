@@ -1,11 +1,20 @@
-use std::path::PathBuf;
+use config::{Config, File};
 use directories::ProjectDirs;
 use serde::Deserialize;
-use config::{Config, File};
+use std::path::PathBuf;
 
 pub const APP_QUALIFIER: &str = "com";
 pub const APP_ORGANIZATION: &str = "44103";
 pub const APP_NAME: &str = "vigil";
+
+// Binary names
+pub const DAEMON_BIN_NAME: &str = "vigild";
+pub const LOGGER_BIN_NAME: &str = "vigil-logger";
+pub const INSTALLER_BIN_NAME: &str = "vigil-installer";
+pub const CLI_BIN_NAME: &str = "vigil";
+
+pub const APP_VERSION: &str = env!("CARGO_PKG_VERSION");
+pub const REPO: &str = "44103/vigil";
 
 #[derive(Debug, Deserialize, Clone)]
 pub struct AppConfig {

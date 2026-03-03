@@ -1,15 +1,14 @@
 use axum::{
+    Json, Router,
     extract::{Path, State},
-    routing::get,
-    Json,
-    Router,
     http::StatusCode,
     response::IntoResponse,
+    routing::get,
 };
 use serde::{Deserialize, Serialize};
 use std::fs::File;
-use std::sync::Arc;
 use std::path::PathBuf;
+use std::sync::Arc;
 use vigil::config::{load_config, resolve_data_dir};
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -46,7 +45,7 @@ async fn main() {
     let listener = tokio::net::TcpListener::bind(&addr)
         .await
         .unwrap_or_else(|_| panic!("Failed to bind port {}", port));
-    
+
     println!("listening on {}", listener.local_addr().unwrap());
     axum::serve(listener, app).await.unwrap();
 }
@@ -56,18 +55,23 @@ async fn get_activities(
     State(state): State<Arc<AppState>>,
 ) -> impl IntoResponse {
     let file_path = state.data_dir.join(format!("{date}.csv"));
-    
+
     let file = match File::open(file_path) {
         Ok(f) => f,
         Err(_) => return (StatusCode::NOT_FOUND, "File not found").into_response(),
     };
 
     let mut rdr = csv::Reader::from_reader(file);
-    let activities = rdr.deserialize()
+    let activities = rdr
+        .deserialize()
         .collect::<Result<Vec<Activity>, _>>()
         .map_err(|e| {
             eprintln!("CSV parse error: {e}");
-            (StatusCode::INTERNAL_SERVER_ERROR, "Failed to parse CSV records").into_response()
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to parse CSV records",
+            )
+                .into_response()
         });
 
     match activities {

@@ -1,15 +1,15 @@
+use crate::config::{load_config, resolve_data_dir};
 use active_win_pos_rs::get_active_window;
-use sysinfo::{Pid, System};
+use chrono::Local;
 use std::fs::{self, OpenOptions};
 use std::io::Write;
 use std::path::PathBuf;
-use chrono::Local;
-use crate::config::{load_config, resolve_data_dir};
+use sysinfo::{Pid, System};
 
 pub async fn run() {
     let mut system = System::new_all();
     let config = load_config();
-    
+
     let interval = config.monitor_interval_secs.unwrap_or(60);
     let data_dir = resolve_data_dir(&config);
 
@@ -27,7 +27,10 @@ pub async fn run() {
     }
 }
 
-async fn log_active_window(system: &System, data_dir: &PathBuf) -> Result<(), Box<dyn std::error::Error>> {
+async fn log_active_window(
+    system: &System,
+    data_dir: &PathBuf,
+) -> Result<(), Box<dyn std::error::Error>> {
     let now = Local::now();
     let date = now.format("%Y-%m-%d").to_string();
     let timestamp = now.format("%Y-%m-%d %H:%M:%S").to_string();
@@ -46,7 +49,8 @@ async fn log_active_window(system: &System, data_dir: &PathBuf) -> Result<(), Bo
     match get_active_window() {
         Ok(active_window) => {
             // u64 -> u32 -> Pid -> Process -> Name
-            let process_name = active_window.process_id
+            let process_name = active_window
+                .process_id
                 .try_into()
                 .ok()
                 .map(Pid::from_u32)
@@ -55,7 +59,10 @@ async fn log_active_window(system: &System, data_dir: &PathBuf) -> Result<(), Bo
                 .unwrap_or_else(|| format!("Unknown (PID: {})", active_window.process_id));
 
             writeln!(file, "{timestamp},{process_name},{}", active_window.title)?;
-            println!("Logged: {timestamp} - {process_name} - {}", active_window.title);
+            println!(
+                "Logged: {timestamp} - {process_name} - {}",
+                active_window.title
+            );
         }
         Err(e) => {
             eprintln!("Could not get active window: {e:?}");

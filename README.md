@@ -2,12 +2,15 @@
 
 ## vigil Installer
 
-This installer automates the setup and configuration of the `vigil` application, which provides integrated management for servers and loggers.
+This installer automates the setup and configuration of the `vigil` system, which consists of:
+*   **`vigild`**: The background service (daemon) that monitors active windows and provides an API.
+*   **`vigil`**: The command-line interface (CLI) for interacting with the system.
+*   **`vigil-logger`**: The logging component.
 
 ### Features
 
-*   Automatically downloads the latest `vigil` and `vigil-logger` binaries from GitHub Releases.
-*   Sets up `vigil` to start automatically on system boot (via systemd on Linux, launchd on macOS, or Startup folder on Windows).
+*   Automatically downloads the latest `vigild`, `vigil`, and `vigil-logger` binaries from GitHub Releases.
+*   Sets up the `vigild` service to start automatically on system boot.
 *   Places binaries and configuration files in user-specific directories, **requiring no `sudo` or administrator privileges**.
 
 ### Installation
@@ -47,7 +50,7 @@ You can edit this file to customize settings such as `log_output_path` and `moni
 
 #### Applying Changes
 
-After modifying `config.toml`, you must **restart the Vigil service** for the changes to take effect. Choose one of the following methods for your operating system:
+After modifying `config.toml`, you must **restart the Vigil daemon (`vigild`)** for the changes to take effect. Choose one of the following methods for your operating system:
 
 *   **Linux:**
     *   **Command:** `systemctl --user restart vigil.service`
@@ -60,8 +63,8 @@ After modifying `config.toml`, you must **restart the Vigil service** for the ch
         ```
     *   **Manual:** Restart your computer.
 *   **Windows:**
-    *   **Command (PowerShell):** `Stop-Process -Name "vigil" -Force; start-process "$env:APPDATA\Microsoft\Windows\Start Menu\Programs\Startup\vigil.exe"`
-    *   **Manual:** Restart your computer, or find `vigil.exe` in the Task Manager, end the process, and run it again from the Startup folder.
+    *   **Command (PowerShell):** `Stop-Process -Name "vigild" -Force; start-process "$env:APPDATA\Microsoft\Windows\Start Menu\Programs\Startup\vigild.exe"`
+    *   **Manual:** Restart your computer, or find `vigild.exe` in the Task Manager, end the process, and run it again from the Startup folder.
 
 ### Uninstallation
 
