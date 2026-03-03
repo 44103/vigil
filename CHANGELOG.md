@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.1](https://github.com/44103/vigil/compare/v0.1.0...v0.1.1) (2026-03-03)
+
+
+### Bug Fixes
+
+* modify release flow for linux ([c9fcaa5](https://github.com/44103/vigil/commit/c9fcaa5b169ccbef9e01cc72f995032d94b0c007))
+
 ## 0.1.0 (2026-03-03)
 
 
